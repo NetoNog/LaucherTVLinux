@@ -1,0 +1,888 @@
+/**
+ * Fast TV Launcher - Ultra-Lightweight Living Room Cinematic Design System
+ * Otimizado especificamente para Smart TVs com 2GB de RAM (Samsung UN43T5300 / Tizen 5.0).
+ * Zero engasgos, 60 FPS estáveis, zero vazamento de memória e espaçamento amplo e arejado.
+ */
+
+:root {
+    /* Paleta Cinemática de Sala de Estar (Living Room Slate) */
+    --bg-main: #0a0c10;
+    --surface-tile: rgba(255, 255, 255, 0.05);
+    --surface-tile-hover: rgba(255, 255, 255, 0.08);
+    --surface-glass: #11151f;
+    --surface-dock: #0e121a;
+
+    /* Tipografia e Cores de Texto */
+    --text-white: #ffffff;
+    --text-silver: #d1d5db;
+    --text-muted: #8b95a5;
+
+    /* Destaque Estilo Apple TV (Frosted White Halo & Leveza de Renderização) */
+    --focus-border: #ffffff;
+    --focus-shadow: 0 14px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.12);
+    --focus-bg: rgba(255, 255, 255, 0.12);
+
+    /* Bordas Sutis */
+    --border-card: rgba(255, 255, 255, 0.08);
+    --border-glass: rgba(255, 255, 255, 0.12);
+
+    /* Dimensões 1080p Safe Area */
+    --safe-x: 60px;
+    --safe-y: 36px;
+    --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+html, body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background-color: var(--bg-main);
+    font-family: var(--font-system);
+    color: var(--text-white);
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+/* ==========================================================================
+   1. Fundo Dinâmico com Difusão Suave (Isolado da CPU via contain: strict)
+   ========================================================================== */
+.backdrop-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    contain: strict;
+}
+
+.backdrop-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.backdrop-layer.active {
+    opacity: 1;
+}
+
+/* Vinheta de Cinema sem consumo de GPU (Renderizado como gradiente estático puro) */
+.cinema-scrim {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.75) 100%),
+                linear-gradient(180deg, rgba(10, 12, 16, 0.4) 0%, transparent 25%, transparent 75%, rgba(10, 12, 16, 0.85) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ==========================================================================
+   2. Viewport Principal e Estrutura Geral
+   ========================================================================== */
+.cinematic-viewport {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: var(--safe-y) var(--safe-x) 84px var(--safe-x);
+    background: transparent;
+}
+
+/* ==========================================================================
+   3. Cabeçalho com Abas Espaçadas e Relógio
+   ========================================================================== */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 52px;
+    margin-bottom: 14px;
+}
+
+.greeting-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 240px;
+}
+
+.greeting-title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: #ffffff;
+}
+
+.greeting-date {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: capitalize;
+}
+
+/* Barra de Abas Superiores Espaçadas */
+.nav-tabs {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 5px 8px;
+    border-radius: 24px;
+    border: 1px solid var(--border-card);
+}
+
+.tab-item {
+    background: transparent;
+    border: 1.5px solid transparent;
+    border-radius: 18px;
+    padding: 7px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+}
+
+.tab-item.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.tab-item.has-focus {
+    background: #ffffff !important;
+    color: #0b0d13 !important;
+    transform: scale(1.05) translateZ(0);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+}
+
+.top-telemetry {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-width: 240px;
+    justify-content: flex-end;
+}
+
+.weather-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-card);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-silver);
+}
+
+.clock-badge {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+}
+
+.sleep-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 14px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    font-size: 12px;
+    font-weight: 600;
+    color: #fbbf24;
+}
+
+/* ==========================================================================
+   4. Hero Spotlight (Palco de Destaque Cinemático)
+   ========================================================================== */
+.hero-stage {
+    height: 136px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    max-width: 980px;
+    transition: opacity 0.15s ease;
+}
+
+.hero-tag {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    padding: 3px 10px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.hero-title {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+    line-height: 1.1;
+    text-shadow: 0 3px 15px rgba(0, 0, 0, 0.7);
+}
+
+.hero-description {
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text-silver);
+    line-height: 1.45;
+    max-width: 840px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* ==========================================================================
+   5. Trilhos de Conteúdo com Espaçamento Amplo (Breathing Room)
+   ========================================================================== */
+.content-rails {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.rail-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rail-heading {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    padding-left: 4px;
+}
+
+/* Linha com espaçamento aumentado para os cartões respirarem */
+.nav-row {
+    display: flex;
+    gap: 26px; /* Espaçamento amplo entre os botões */
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 8px 22px 8px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.nav-row::-webkit-scrollbar {
+    display: none;
+}
+
+/* ==========================================================================
+   6. Cartões Widescreen 16:9 Ultraleves (Contain: layout style)
+   ========================================================================== */
+.media-card {
+    flex: 0 0 216px;
+    height: 132px;
+    background: var(--surface-tile);
+    border: 1.5px solid var(--border-card);
+    border-radius: 18px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    overflow: hidden;
+    contain: layout style;
+    transition: transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1), 
+                border-color 0.16s ease,
+                box-shadow 0.16s ease;
+}
+
+.media-card-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.media-card-scrim {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(10, 12, 16, 0.55) 60%, rgba(10, 12, 16, 0.92) 100%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.media-card-top {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.media-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.media-card-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: #ffffff;
+}
+
+.media-card-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #e5e7eb;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    text-transform: uppercase;
+}
+
+.media-card-bottom {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.media-card-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-white);
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.media-card-sublabel {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Feixe de Luz Deslizante Leve (Acelerado sem sobrecarregar VRAM) */
+.media-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -140%;
+    width: 90%;
+    height: 200%;
+    background: linear-gradient(
+        115deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.22) 50%,
+        transparent 100%
+    );
+    transform: rotate(25deg);
+    pointer-events: none;
+    z-index: 5;
+    transition: left 0s;
+}
+
+.media-card.has-focus::after {
+    left: 170%;
+    transition: left 0.5s ease-out;
+}
+
+/* ==========================================================================
+   7. Cartões de Entrada de Vídeo / HDMI (Estáticos e Leves)
+   ========================================================================== */
+.input-card {
+    flex: 0 0 296px;
+    height: 82px;
+    background: var(--surface-tile);
+    border: 1.5px solid var(--border-card);
+    border-radius: 16px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    outline: none;
+    position: relative;
+    overflow: hidden;
+    contain: layout style;
+    transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.input-icon-pill {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.input-icon-pill svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+.input-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.input-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.input-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+/* Ponto de Sinal Ativo Estático e Ultraleve (Zero Repaints Contínuos na GPU) */
+.signal-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.signal-dot.live {
+    box-shadow: 0 0 6px #10b981;
+}
+
+.input-subtext {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.input-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-silver);
+    border: 1px solid var(--border-card);
+}
+
+/* ==========================================================================
+   8. Barra Discreta de Ferramentas / Ajustes
+   ========================================================================== */
+.tool-pill-card {
+    flex: 0 0 240px;
+    height: 60px;
+    background: var(--surface-tile);
+    border: 1.5px solid var(--border-card);
+    border-radius: 14px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    outline: none;
+    contain: layout style;
+    transition: transform 0.16s ease, border-color 0.16s ease;
+}
+
+.tool-pill-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+}
+
+.tool-pill-icon svg {
+    width: 17px;
+    height: 17px;
+    fill: currentColor;
+}
+
+.tool-pill-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-silver);
+}
+
+/* ==========================================================================
+   9. Estado de Foco Cinemático e Rápido (Sem gargalo de GPU)
+   ========================================================================== */
+.focusable.has-focus,
+.focusable:focus {
+    transform: scale(1.08) translateZ(0) !important;
+    border-color: rgba(255, 255, 255, 0.95) !important;
+    background: var(--focus-bg) !important;
+    box-shadow: var(--focus-shadow) !important;
+    z-index: 25;
+}
+
+.focusable.has-focus .media-card-label,
+.focusable.has-focus .input-name,
+.focusable.has-focus .tool-pill-label {
+    color: #ffffff !important;
+}
+
+.focusable.has-focus .media-card-backdrop {
+    opacity: 1 !important;
+}
+
+.active-press {
+    transform: scale(0.97) translateZ(0) !important;
+}
+
+/* Modo de Reordenação */
+.reorder-active .media-card {
+    border-color: rgba(251, 191, 36, 0.35) !important;
+}
+
+.reorder-active .media-card.has-focus {
+    border-color: #fbbf24 !important;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(251, 191, 36, 0.3) !important;
+}
+
+/* ==========================================================================
+   10. Dock Flutuante na Base (Sem backdrop-filter para economizar RAM)
+   ========================================================================== */
+.floating-dock {
+    position: fixed;
+    bottom: 22px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.dock-pill {
+    pointer-events: auto;
+    background: var(--surface-dock);
+    border: 1.5px solid var(--border-glass);
+    border-radius: 26px;
+    padding: 8px 28px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+}
+
+.dock-hints {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.dock-hint-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.dock-key {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.dock-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-silver);
+}
+
+.dock-divider {
+    width: 1px;
+    height: 16px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.dock-color-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.dot-red {
+    background: #e50914;
+}
+
+.dot-green {
+    background: #10b981;
+}
+
+.dot-yellow {
+    background: #f59e0b;
+    color: #0b0d13;
+}
+
+.dot-blue {
+    background: #2563eb;
+}
+
+.dock-device-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.tizen-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+/* ==========================================================================
+   11. Diálogos Modais (Fundo Sólido Sem Blur Pesado)
+   ========================================================================== */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(5, 7, 10, 0.88);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-backdrop.modal-active {
+    display: flex;
+}
+
+.cinematic-modal {
+    width: 580px;
+    background: var(--surface-glass);
+    border: 1.5px solid var(--border-glass);
+    border-radius: 22px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9);
+}
+
+.modal-title {
+    font-size: 21px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+}
+
+.modal-text {
+    font-size: 14px;
+    color: var(--text-silver);
+    line-height: 1.5;
+}
+
+.modal-row-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.modal-row-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 14px;
+}
+
+.modal-row-label {
+    color: var(--text-muted);
+}
+
+.modal-row-val {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.modal-btn-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.clean-btn {
+    padding: 11px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    outline: none;
+}
+
+.btn-solid-white {
+    background: #ffffff;
+    color: #0b0d13;
+}
+
+.btn-outline-glass {
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Sleep Timer Choices */
+.sleep-choice-grid {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0;
+}
+
+.sleep-btn {
+    flex: 1;
+    padding: 12px 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid var(--border-card);
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+}
+
+.sleep-btn.has-focus {
+    border-color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Toast Notifier Elegante */
+.cinematic-toast {
+    position: fixed;
+    bottom: 84px;
+    left: 50%;
+    transform: translateX(-50%) translateY(30px);
+    background: #141822;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 10px 22px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 2000;
+}
+
+.cinematic-toast.toast-shown {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* Dimmer / Painel Desligado */
+.cinema-dimmer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+}
+
+.cinema-dimmer.dimmer-active {
+    opacity: 0.99;
+    pointer-events: all;
+}
+
+.dimmer-text {
+    color: #374151;
+    font-size: 15px;
+    letter-spacing: 1px;
+}

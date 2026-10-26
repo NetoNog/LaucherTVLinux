@@ -1,0 +1,13 @@
+# Tizen OS Build Artifacts
+dist/*.wgt
+dist/*.zip
+
+# Private Signing Keys & Passwords
+*.pwd
+*.p12
+
+# OS Artifacts
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
